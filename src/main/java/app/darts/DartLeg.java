@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class DartLeg {
     private static final int THROWS_PER_ROUND = 3;
@@ -68,7 +69,7 @@ public class DartLeg {
         currentPlayerThrowsInRound.add(dartThrow);
         if ( currentPlayerRunningTotal == 0 && outshotStyle.qualifies(dartThrow)) {
             winningPlayer = currentPlayer;
-        } else if (currentPlayerThrowsInRound.size() == THROWS_PER_ROUND) {
+        } else if (currentPlayerThrowsInRound.size() == THROWS_PER_ROUND || currentPlayerRunningTotal < 0) {
             recordEndOfTurn();
         }
     }
@@ -76,6 +77,9 @@ public class DartLeg {
     private void recordEndOfTurn() { // cannot edit last throw of round if immediate recording of end
         if (currentPlayerRunningTotal > 0) {
             scoresPreThrow.put(currentPlayer, currentPlayerRunningTotal);
+        } else if (currentPlayerRunningTotal < 0) {
+            IntStream.range(0, THROWS_PER_ROUND - currentPlayerThrowsInRound.size())
+                    .forEach((i) -> allThrows.get(currentPlayer).add(DartThrow.getNoThrow()));
         }
         String temp = currentPlayer;
         currentPlayer = otherPlayer;

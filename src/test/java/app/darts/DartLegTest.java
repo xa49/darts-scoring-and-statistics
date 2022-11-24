@@ -2,6 +2,8 @@ package app.darts;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class DartLegTest {
@@ -133,6 +135,15 @@ class DartLegTest {
         leg.addThrow(DartThrow.of("d12"));
 
         assertEquals("starting", leg.getWinningPlayer());
+    }
+
+    @Test
+    void moveToNextPlayerIfTooMuchOnNonFinalArrow() {
+        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 40);
+        leg.addThrow(DartThrow.of("t20"));
+        assertEquals("opponent", leg.getCurrentPlayer());
+        assertEquals(List.of(DartThrow.of("t20"), DartThrow.getNoThrow(), DartThrow.getNoThrow()), leg.getAllThrows().get("starting"));
+
     }
 
 }

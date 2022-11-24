@@ -2,6 +2,7 @@ package app.darts;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 public class DartThrow {
     private static final Map<String, BoardRing> MODIFIERS =
@@ -12,6 +13,8 @@ public class DartThrow {
     private static final int INNER_BULLSEYE_SPECIFIER = 50;
     private static final int MAXIMUM_SECTOR_VALUE = 20;
     private static final char[] DIGITS = new char[]{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+    private static final DartThrow NO_THROW = new DartThrow(0, BoardRing.NO_THROW);
 
     private final int sector;
     private final BoardRing ring;
@@ -82,6 +85,10 @@ public class DartThrow {
         this.ring = ring;
     }
 
+    public static DartThrow getNoThrow() {
+        return NO_THROW;
+    }
+
     public int getScore() {
         return ring.getScore(sector);
     }
@@ -92,5 +99,26 @@ public class DartThrow {
 
     public boolean isInnerBullsEye() {
         return ring == BoardRing.INNER_BULLSEYE;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DartThrow dartThrow = (DartThrow) o;
+        return sector == dartThrow.sector && ring == dartThrow.ring;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sector, ring);
+    }
+
+    @Override
+    public String toString() {
+        return "DartThrow{" +
+                "sector=" + sector +
+                ", ring=" + ring +
+                '}';
     }
 }
