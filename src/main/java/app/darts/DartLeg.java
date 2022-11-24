@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class DartLeg {
     private static final int THROWS_PER_ROUND = 3;
-    private final DartFinishStyle dartFinishStyle;
+    private final OutshotStyle outshotStyle;
     private final Map<String, Integer> scoresPreThrow;
     private final List<DartThrow> currentPlayerThrowsInRound = new ArrayList<>(THROWS_PER_ROUND);
     private String currentPlayer;
@@ -16,14 +16,14 @@ public class DartLeg {
     private String winningPlayer;
     private int currentPlayerRunningTotal;
 
-    public static DartLeg from(DartFinishStyle dartFinishStyle, String startingPlayer, String opponentPlayer, int startingScore) {
+    public static DartLeg from(OutshotStyle outshotStyle, String startingPlayer, String opponentPlayer, int startingScore) {
         Map<String, Integer> currentScores = new HashMap<>(Map.of(startingPlayer, startingScore, opponentPlayer, startingScore));
-        return new DartLeg(dartFinishStyle, currentScores, startingPlayer, opponentPlayer, startingScore);
+        return new DartLeg(outshotStyle, currentScores, startingPlayer, opponentPlayer, startingScore);
     }
 
-    private DartLeg(DartFinishStyle dartFinishStyle, Map<String, Integer> scoresPreThrow, String currentPlayer,
+    private DartLeg(OutshotStyle outshotStyle, Map<String, Integer> scoresPreThrow, String currentPlayer,
                     String otherPlayer, int currentPlayerRunningTotal) {
-        this.dartFinishStyle = dartFinishStyle;
+        this.outshotStyle = outshotStyle;
         this.scoresPreThrow = scoresPreThrow;
         this.currentPlayer = currentPlayer;
         this.otherPlayer = otherPlayer;
@@ -60,13 +60,13 @@ public class DartLeg {
 
     public void addThrow(DartThrow dartThrow) {
         if (isOver()) {
-            throw new IllegalStateException("CANNOT ADD THROW TO FINISHED LEG");
+            throw new IllegalStateException("Cannot add throw to finished leg.");
         }
 
         currentPlayerRunningTotal -= dartThrow.getScore();
         allThrows.computeIfAbsent(currentPlayer, l -> new ArrayList<>()).add(dartThrow);
         currentPlayerThrowsInRound.add(dartThrow);
-        if ( currentPlayerRunningTotal == 0 && dartFinishStyle.qualifiesForWinningThrow(dartThrow)) {
+        if ( currentPlayerRunningTotal == 0 && outshotStyle.qualifies(dartThrow)) {
             winningPlayer = currentPlayer;
         } else if (currentPlayerThrowsInRound.size() == THROWS_PER_ROUND) {
             recordEndOfTurn();
