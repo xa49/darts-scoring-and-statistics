@@ -22,13 +22,13 @@ public enum BoardRing {
     OUTER_BULLSEYE {
         @Override
         public int getScore(int sectorNumber) {
-            return Constants.OUTER_BULLSEYE_VALUE;
+            return DartsConstants.OUTER_BULLSEYE_VALUE;
         }
     },
     INNER_BULLSEYE {
         @Override
         public int getScore(int sectorNumber) {
-            return Constants.INNER_BULLSEYE_VALUE;
+            return DartsConstants.INNER_BULLSEYE_VALUE;
         }
     },
     MISS {
@@ -42,12 +42,13 @@ public enum BoardRing {
         public int getScore(int sectorNumber) {
             return 0;
         }
+    },
+    NO_SCORE {
+        @Override
+        public int getScore(int sectorNumber) {
+            return 0;
+        }
     };
 
     public abstract int getScore(int sectorNumber);
-
-    private static class Constants {
-        private static final int OUTER_BULLSEYE_VALUE = 25;
-        private static final int INNER_BULLSEYE_VALUE = 50;
-    }
 }

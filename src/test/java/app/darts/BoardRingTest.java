@@ -45,4 +45,10 @@ class BoardRingTest {
         assertEquals(0, BoardRing.NO_THROW.getScore(1));
     }
 
+    @Test
+    void noScore_alwaysReturnsZero() {
+        assertEquals(0, BoardRing.NO_SCORE.getScore(0));
+        assertEquals(0, BoardRing.NO_SCORE.getScore(1));
+    }
+
 }

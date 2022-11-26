@@ -1,63 +1,84 @@
 package app.darts;
 
+import app.darts.stats.PlayerStatistics;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DartLegTest {
 
+    final DartLeg leg501;
+    final Map<String, PlayerStatistics> playerStatistics = Map.of("starting", new PlayerStatistics("starting"),
+            "opponent", new PlayerStatistics("opponent"));
+
+    final GameStyle gameStyle501 = GameStyle.builder()
+            .initialScore(501)
+            .sets(1)
+            .legsPerSet(1)
+            .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+            .build();
+
+    final GameStyle gameStyle100 = GameStyle.builder()
+            .initialScore(100)
+            .sets(1)
+            .legsPerSet(1)
+            .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+            .build();
+
+
+    {
+        leg501 = DartLeg.of(gameStyle501, "starting", "opponent", playerStatistics);
+    }
+
     @Test
     void currentPlayerSetCorrectly() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 501);
-        assertEquals("starting", leg.getCurrentPlayer());
+
+        assertEquals("starting", leg501.getCurrentPlayer());
     }
 
     @Test
     void playersRotateIfGameNotEnded() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 501);
-        assertEquals("starting", leg.getCurrentPlayer());
-        leg.addThrow(DartThrow.of("20"));
-        assertEquals("starting", leg.getCurrentPlayer());
-        leg.addThrow(DartThrow.of("20"));
-        assertEquals("starting", leg.getCurrentPlayer());
-        leg.addThrow(DartThrow.of("20"));
-        assertEquals("opponent", leg.getCurrentPlayer());
+        assertEquals("starting", leg501.getCurrentPlayer());
+        leg501.addThrow(DartThrow.of("20"));
+        assertEquals("starting", leg501.getCurrentPlayer());
+        leg501.addThrow(DartThrow.of("20"));
+        assertEquals("starting", leg501.getCurrentPlayer());
+        leg501.addThrow(DartThrow.of("20"));
+        assertEquals("opponent", leg501.getCurrentPlayer());
     }
 
 
     @Test
     void scoreDeductedFromBothPlayers() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 501);
         // Starting player throws
-        leg.addThrow(DartThrow.of("20"));
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("25"));
+        leg501.addThrow(DartThrow.of("20"));
+        leg501.addThrow(DartThrow.of("t20"));
+        assertEquals(421, leg501.getCurrentPlayerRunningTotal());
+        leg501.addThrow(DartThrow.of("25"));
 
         // Non-starting player throws
-        leg.addThrow(DartThrow.of("t19"));
-        leg.addThrow(DartThrow.of("t19"));
-        leg.addThrow(DartThrow.of("t19"));
+        leg501.addThrow(DartThrow.of("t19"));
+        leg501.addThrow(DartThrow.of("t19"));
+        assertEquals(387, leg501.getCurrentPlayerRunningTotal());
 
-        assertEquals(396, leg.getScoresPreThrow().get("starting"));
-        assertEquals(330, leg.getScoresPreThrow().get("opponent"));
     }
 
     @Test
     void startingPlayerCanWin() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 100);
+
+        DartLeg leg = DartLeg.of(gameStyle100, "starting", "opponent", playerStatistics);
         // Starting player throws
-        leg.addThrow(DartThrow.of("20"));
-        leg.addThrow(DartThrow.of("d20"));
+        leg.addThrow(DartThrow.of("t20"));
         leg.addThrow(DartThrow.of("d20"));
 
-        assertEquals("starting", leg.getWinningPlayer());
+        assertEquals("starting", leg.getWinningPlayer().orElse("not starting"));
     }
 
     @Test
     void nonStartingPlayerCanWin() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 100);
+        DartLeg leg = DartLeg.of(gameStyle100, "starting", "opponent", playerStatistics);
         // Starting player throws
         leg.addThrow(DartThrow.of("1"));
         leg.addThrow(DartThrow.of("1"));
@@ -68,16 +89,15 @@ class DartLegTest {
         leg.addThrow(DartThrow.of("d20"));
         leg.addThrow(DartThrow.of("50"));
 
-        assertEquals("opponent", leg.getWinningPlayer());
+        assertEquals("opponent", leg.getWinningPlayer().orElse("not opponent"));
     }
 
     @Test
     void cannotAddThrowToFinishedLeg() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 100);
+        DartLeg leg = DartLeg.of(gameStyle100, "starting", "opponent", playerStatistics);
         // Starting player throws
-        leg.addThrow(DartThrow.of("10"));
+        leg.addThrow(DartThrow.of("t20"));
         leg.addThrow(DartThrow.of("d20"));
-        leg.addThrow(DartThrow.of("50"));
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> leg.addThrow(DartThrow.of("1")));
@@ -86,64 +106,57 @@ class DartLegTest {
 
     @Test
     void noScoreIfPlayerReachedZeroWithoutFinishingCondition() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 100);
+        DartLeg leg = DartLeg.of(gameStyle100, "starting", "opponent", playerStatistics);
         // Starting player throws
         leg.addThrow(DartThrow.of("t20"));
         leg.addThrow(DartThrow.of("20"));
         leg.addThrow(DartThrow.of("20"));
 
-        assertNull(leg.getWinningPlayer());
+        assertTrue(leg.getWinningPlayer().isEmpty());
         assertEquals("opponent", leg.getCurrentPlayer());
-        assertEquals(100, leg.getScoresPreThrow().get("starting"));
+        assertEquals(100, leg.getCurrentPlayerRunningTotal());
     }
 
     @Test
-    void noScoreIfTooMuchScore() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 80);
-        // Starting player throws
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("20"));
-        leg.addThrow(DartThrow.of("20"));
-
-        assertEquals(80, leg.getScoresPreThrow().get("starting"));
+    void nextPlayerUpIfBustsWithOneLeft() {
+        GameStyle gameStyle = GameStyle.builder()
+                .initialScore(39)
+                .sets(1)
+                .legsPerSet(1)
+                .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+                .build();
+        DartLeg leg = DartLeg.of(gameStyle, "starting", "opponent", playerStatistics);
+        leg.addThrow(DartThrow.of("d19")); // bust
+        assertEquals("opponent", leg.getCurrentPlayer());
     }
 
     @Test
     void nineDarterIsRecordedCorrectly() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 501);
         // Starting player down to 321
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
 
-        leg.addThrow(DartThrow.of("t10"));
-        leg.addThrow(DartThrow.of("t10"));
-        leg.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
 
         // Starting player down to 141
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t20"));
 
-        leg.addThrow(DartThrow.of("t10"));
-        leg.addThrow(DartThrow.of("t10"));
-        leg.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
+        leg501.addThrow(DartThrow.of("t10"));
 
         // Starting player outshot
-        leg.addThrow(DartThrow.of("t20"));
-        leg.addThrow(DartThrow.of("t19"));
-        leg.addThrow(DartThrow.of("d12"));
+        leg501.addThrow(DartThrow.of("t20"));
+        leg501.addThrow(DartThrow.of("t19"));
+        leg501.addThrow(DartThrow.of("d12"));
 
-        assertEquals("starting", leg.getWinningPlayer());
+        assertEquals("starting", leg501.getWinningPlayer().orElse("not starting"));
     }
 
-    @Test
-    void moveToNextPlayerIfTooMuchOnNonFinalArrow() {
-        DartLeg leg = DartLeg.from(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, "starting", "opponent", 40);
-        leg.addThrow(DartThrow.of("t20"));
-        assertEquals("opponent", leg.getCurrentPlayer());
-        assertEquals(List.of(DartThrow.of("t20"), DartThrow.getNoThrow(), DartThrow.getNoThrow()), leg.getAllThrows().get("starting"));
-
-    }
 
 }

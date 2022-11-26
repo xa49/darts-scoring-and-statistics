@@ -1,92 +1,71 @@
 package app.darts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import app.darts.stats.PlayerStatistics;
+
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
+import java.util.Optional;
 
 public class DartLeg {
-    private static final int THROWS_PER_ROUND = 3;
-    private final OutshotStyle outshotStyle;
-    private final Map<String, Integer> scoresPreThrow;
-    private final List<DartThrow> currentPlayerThrowsInRound = new ArrayList<>(THROWS_PER_ROUND);
-    private String currentPlayer;
-    private String otherPlayer;
-    private final Map<String, List<DartThrow>> allThrows = new HashMap<>();
-    private String winningPlayer;
-    private int currentPlayerRunningTotal;
+    private final List<ScoreTracker> scoreTrackers;
+    private int throwingRound;
 
-    public static DartLeg from(OutshotStyle outshotStyle, String startingPlayer, String opponentPlayer, int startingScore) {
-        Map<String, Integer> currentScores = new HashMap<>(Map.of(startingPlayer, startingScore, opponentPlayer, startingScore));
-        return new DartLeg(outshotStyle, currentScores, startingPlayer, opponentPlayer, startingScore);
+    public static DartLeg of(GameStyle gameStyle, String startingPlayer, String opponentPlayer,
+                             Map<String, PlayerStatistics> playerStatistics) {
+        List<ScoreTracker> scoreTrackers = List.of(
+                new ScoreTracker(gameStyle, startingPlayer, playerStatistics.get(startingPlayer).getEventDispatcher()),
+                new ScoreTracker(gameStyle, opponentPlayer, playerStatistics.get(opponentPlayer).getEventDispatcher())
+        );
+        return new DartLeg(scoreTrackers);
     }
 
-    private DartLeg(OutshotStyle outshotStyle, Map<String, Integer> scoresPreThrow, String currentPlayer,
-                    String otherPlayer, int currentPlayerRunningTotal) {
-        this.outshotStyle = outshotStyle;
-        this.scoresPreThrow = scoresPreThrow;
-        this.currentPlayer = currentPlayer;
-        this.otherPlayer = otherPlayer;
-        this.currentPlayerRunningTotal = currentPlayerRunningTotal;
-    }
-
-    public String getWinningPlayer() {
-        return winningPlayer;
+    private DartLeg(List<ScoreTracker> scoreTrackers) {
+        this.scoreTrackers = scoreTrackers;
     }
 
     public String getCurrentPlayer() {
-        return currentPlayer;
+        return scoreTrackers.get(throwingRound % scoreTrackers.size()).getPlayerName();
     }
 
-    public boolean isOver() {
-        return winningPlayer !=  null;
-    }
-
-    public Map<String, Integer> getScoresPreThrow() {
-        return scoresPreThrow;
-    }
-
-    public List<DartThrow> getCurrentPlayerThrowsInRound() {
-        return currentPlayerThrowsInRound;
-    }
-
-    public Map<String, List<DartThrow>> getAllThrows() {
-        return allThrows;
+    public int getArrowsLeftForCurrentPlayer() {
+        ScoreTracker currentPlayerTracker = scoreTrackers.get(throwingRound % scoreTrackers.size());
+        return DartsConstants.THROWS_PER_ROUND - currentPlayerTracker.getThrowsInCurrentRound().size();
     }
 
     public int getCurrentPlayerRunningTotal() {
-        return currentPlayerRunningTotal;
+        return scoreTrackers.get(throwingRound % scoreTrackers.size()).getCurrentScore();
     }
+
+    public boolean isOver() {
+        return scoreTrackers.stream().anyMatch(ScoreTracker::isWinner);
+    }
+
+    public Optional<String> getWinningPlayer() {
+        return scoreTrackers.stream()
+                .filter(ScoreTracker::isWinner)
+                .map(ScoreTracker::getPlayerName)
+                .findAny();
+    }
+
 
     public void addThrow(DartThrow dartThrow) {
         if (isOver()) {
             throw new IllegalStateException("Cannot add throw to finished leg.");
         }
 
-        currentPlayerRunningTotal -= dartThrow.getScore();
-        allThrows.computeIfAbsent(currentPlayer, l -> new ArrayList<>()).add(dartThrow);
-        currentPlayerThrowsInRound.add(dartThrow);
-        if ( currentPlayerRunningTotal == 0 && outshotStyle.qualifies(dartThrow)) {
-            winningPlayer = currentPlayer;
-        } else if (currentPlayerThrowsInRound.size() == THROWS_PER_ROUND || currentPlayerRunningTotal < 0) {
-            recordEndOfTurn();
+        ScoreTracker currentPlayerScores = scoreTrackers.get(throwingRound % scoreTrackers.size());
+        currentPlayerScores.addThrow(dartThrow);
+
+        if (currentPlayerScores.isWinner()) {
+            scoreTrackers.get((throwingRound + 1) % scoreTrackers.size()).recordLegLost();
+        } else if (currentPlayerScores.isEndOfRound()) {
+            throwingRound++;
         }
+
     }
 
-    private void recordEndOfTurn() { // cannot edit last throw of round if immediate recording of end
-        if (currentPlayerRunningTotal > 0) {
-            scoresPreThrow.put(currentPlayer, currentPlayerRunningTotal);
-        } else if (currentPlayerRunningTotal < 0) {
-            IntStream.range(0, THROWS_PER_ROUND - currentPlayerThrowsInRound.size())
-                    .forEach((i) -> allThrows.get(currentPlayer).add(DartThrow.getNoThrow()));
-        }
-        String temp = currentPlayer;
-        currentPlayer = otherPlayer;
-        otherPlayer = temp;
-        currentPlayerRunningTotal = scoresPreThrow.get(currentPlayer);
-        currentPlayerThrowsInRound.clear();
+    public int getScoreBy(String player) {
+        return player.equals(getCurrentPlayer()) ? getCurrentPlayerRunningTotal()
+                : scoreTrackers.get(scoreTrackers.size() - (throwingRound % scoreTrackers.size() + 1)).getCurrentScore();
     }
-
-
 }

@@ -1,21 +1,40 @@
 package app.darts;
 
+import app.darts.stats.PlayerStatistics;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DartSetTest {
+    final GameStyle gameStyle = GameStyle.builder()
+            .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+            .sets(1)
+            .legsPerSet(1)
+            .initialScore(501)
+            .build();
+
+    final GameStyle shortGameFrom40 = GameStyle.builder()
+            .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+            .sets(1)
+            .legsPerSet(1)
+            .initialScore(40)
+            .build();
+    final Map<String, PlayerStatistics> playerStatistics = Map.of("starting", new PlayerStatistics("starting"),
+            "opponent", new PlayerStatistics("opponent"));
 
     @Test
     void startingPlayerIsMarkedStarter() {
-        DartSet dartSet = DartSet.from(5, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 501, "starting", "opponent");
+        DartSet dartSet = DartSet.of(gameStyle, "starting", "opponent", playerStatistics);
         assertEquals("starting", dartSet.getCurrentPlayer());
     }
 
     @Test
     void cannotAddThrowToFinishedSet() {
-        DartSet dartSet = DartSet.from(1, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 40, "starting", "opponent");
-        dartSet.addThrow(DartThrow.of("d20"));
+
+        DartSet dartSet = DartSet.of(shortGameFrom40, "starting", "opponent", playerStatistics);
+        dartSet.addThrow(DartThrow.of("d20")); // outshot for 40
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> dartSet.addThrow(DartThrow.of("10")));
@@ -24,32 +43,35 @@ class DartSetTest {
 
     @Test
     void throwsAreAddedToTheObject() {
-        DartSet dartSet = DartSet.from(1, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 100, "starting", "opponent");
+        DartSet dartSet = DartSet.of(gameStyle, "starting", "opponent", playerStatistics);
         dartSet.addThrow(DartThrow.of("20"));
-        assertEquals(80, dartSet.getLegs().get(0).getCurrentPlayerRunningTotal());
-    }
-
-    @Test
-    void evenLegCountNotAllowed() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> DartSet.from(2, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 501, "s", "o"));
-        assertEquals("Maximum total leg count must be odd.", ex.getMessage());
-
+        assertEquals(481, dartSet.getLegs().get(0).getCurrentPlayerRunningTotal());
     }
 
     @Test
     void newLegIsAddedAfterOneIsWon() {
-        DartSet dartSet = DartSet.from(3, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 40, "starting", "opponent");
-        // Starting player outshot
+        GameStyle threeLegGame = GameStyle.builder()
+                .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+                .sets(1)
+                .legsPerSet(3)
+                .initialScore(40)
+                .build();
+        DartSet dartSet = DartSet.of(threeLegGame, "starting", "opponent", playerStatistics);
         dartSet.addThrow(DartThrow.of("d20"));
 
-        assertEquals("starting", dartSet.getLegs().get(0).getWinningPlayer());
+        assertEquals("starting", dartSet.getLegs().get(0).getWinningPlayer().orElse("not starting"));
         assertEquals(2, dartSet.getLegs().size());
     }
 
     @Test
     void startingPlayersAreRotated() {
-        DartSet dartSet = DartSet.from(3, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 40, "starting", "opponent");
+        GameStyle multiRoundShortGame = GameStyle.builder()
+                .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+                .sets(1)
+                .legsPerSet(3)
+                .initialScore(40)
+                .build();
+        DartSet dartSet = DartSet.of(multiRoundShortGame, "starting", "opponent", playerStatistics);
         assertEquals("starting", dartSet.getCurrentPlayer());
         dartSet.addThrow(DartThrow.of("d20"));
         assertEquals("opponent", dartSet.getCurrentPlayer());
@@ -57,7 +79,7 @@ class DartSetTest {
 
     @Test
     void opponentCanWinSet_singleLeg() {
-        DartSet dartSet = DartSet.from(1, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 40, "starting", "opponent");
+        DartSet dartSet = DartSet.of(shortGameFrom40, "starting", "opponent", playerStatistics);
         dartSet.addThrow(DartThrow.of("d10"));
         dartSet.addThrow(DartThrow.of("x"));
         dartSet.addThrow(DartThrow.of("x"));
@@ -71,7 +93,13 @@ class DartSetTest {
 
     @Test
     void startingPlayerCanWin_multipleLegs() {
-        DartSet dartSet = DartSet.from(3, OutshotStyle.DOUBLE_OR_INNER_BULL_OUT, 40, "starting", "opponent");
+        GameStyle multiRoundShortGame = GameStyle.builder()
+                .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+                .sets(1)
+                .legsPerSet(3)
+                .initialScore(40)
+                .build();
+        DartSet dartSet = DartSet.of(multiRoundShortGame, "starting", "opponent", playerStatistics);
         dartSet.addThrow(DartThrow.of("d20"));
 
         dartSet.addThrow(DartThrow.of("x"));

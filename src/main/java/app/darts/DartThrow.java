@@ -15,6 +15,7 @@ public class DartThrow {
     private static final char[] DIGITS = new char[]{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 
     private static final DartThrow NO_THROW = new DartThrow(0, BoardRing.NO_THROW);
+    private static final DartThrow NO_SCORE = new DartThrow(0, BoardRing.NO_SCORE);
 
     private final int sector;
     private final BoardRing ring;
@@ -87,6 +88,9 @@ public class DartThrow {
 
     public static DartThrow getNoThrow() {
         return NO_THROW;
+    }
+    public static DartThrow getNoScore() {
+        return NO_SCORE;
     }
 
     public int getScore() {
