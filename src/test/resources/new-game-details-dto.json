@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "gameId": {
+      "type": "integer"
+    },
+    "gameStyle": {
+      "type": "object",
+      "properties": {
+        "sets": {
+          "type": "integer"
+        },
+        "legsPerSet": {
+          "type": "integer"
+        },
+        "initialScore": {
+          "type": "integer"
+        },
+        "outshotStyle": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "sets", "legsPerSet", "initialScore", "outshotStyle"
+      ]
+    }
+  },
+  "required": [
+    "gameId", "gameStyle"
+  ],
+  "additionalProperties": false
+}

@@ -13,6 +13,7 @@ public class DartSet {
     private String otherPlayer;
     private final List<DartLeg> legs = new ArrayList<>();
     private String winningPlayer;
+    private GameEvent lastEvent;
 
     public static DartSet of(GameStyle gameStyle, String startingPlayer, String opponent,
                              Map<String, PlayerStatistics> playerStatistics) {
@@ -37,6 +38,10 @@ public class DartSet {
         return winningPlayer;
     }
 
+    public GameEvent getLastEvent() {
+        return lastEvent;
+    }
+
     public List<DartLeg> getLegs() {
         return legs;
     }
@@ -56,6 +61,17 @@ public class DartSet {
         currentLeg.addThrow(dartThrow);
         if (currentLeg.isOver()) {
             recordLegOver();
+        }
+        updateLastEvent(currentLeg);
+    }
+
+    private void updateLastEvent(DartLeg currentLeg) {
+        if (isOver()) {
+            lastEvent = GameEvent.SET_OVER;
+        } else if (currentLeg.isOver()) {
+            lastEvent = GameEvent.LEG_OVER;
+        } else {
+            lastEvent = GameEvent.THROW;
         }
     }
 

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DartThrowTest {
 
-    private static  final String FORMAT_GUIDANCE_MESSAGE = "Read more about formatting rules at /help";
+    private static  final String FORMAT_GUIDANCE_MESSAGE = "Read more about formatting rules at /format-help";
 
     @Test
     void parsingSingle() {

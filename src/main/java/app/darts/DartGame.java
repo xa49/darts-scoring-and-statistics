@@ -16,6 +16,7 @@ public class DartGame {
     private String otherPlayer;
     private final List<DartSet> sets = new ArrayList<>();
     private String winningPlayer;
+    private GameEvent lastEvent = GameEvent.GAME_CREATED;
 
     public static DartGame of(GameStyle gameStyle, String startingPlayer,
                               String otherPlayer) {
@@ -45,6 +46,10 @@ public class DartGame {
         return id;
     }
 
+    public GameEvent getLastEvent() {
+        return lastEvent;
+    }
+
     public PlayerStatistics getPlayerStatistics(String name) {
         PlayerStatistics personalStatistics = playerStatistics.get(name);
         if (personalStatistics == null) {
@@ -67,6 +72,15 @@ public class DartGame {
         if (currentSet.isOver()) {
             recordEndOfSet();
         }
+        updateLastEvent(currentSet);
+    }
+
+    private void updateLastEvent(DartSet currentSet) {
+        if(isOver()) {
+            lastEvent = GameEvent.GAME_OVER;
+        } else {
+            lastEvent = currentSet.getLastEvent();
+        }
     }
 
     public int getSetsWonBy(String player) {
@@ -77,7 +91,7 @@ public class DartGame {
 
     public String getNextToThrow() {
         if (isOver()) {
-            return "GAME OVER";
+            return null;
         }
         DartSet currentSet = sets.get(sets.size() - 1);
         return currentSet.getCurrentPlayer();
@@ -103,24 +117,30 @@ public class DartGame {
                 .toList();
     }
 
-    public Map<String, Map<String, Integer>> getCurrentStanding() {
-        Map<String, Integer> gameSets = playerStatistics.keySet().stream()
+    public Map<String , Integer> getSetsWonByAll() {
+        return playerStatistics.keySet().stream()
                 .collect(Collectors.toMap(
                         p -> p,
                         this::getSetsWonBy
                 ));
-        Map<String, Integer> currentSetLegs = playerStatistics.keySet().stream()
+    }
+
+    public Map<String, Integer> getLegsWonInCurrentSetByAll() {
+        return playerStatistics.keySet().stream()
                 .collect(Collectors.toMap(
                         p -> p,
                         this::getLegsWonByInCurrentSet
                 ));
-        Map<String, Integer> currentScore = playerStatistics.keySet().stream()
+    }
+
+    public Map<String, Integer> getScoresInCurrentLegByAll() {
+        return         playerStatistics.keySet().stream()
                 .collect(Collectors.toMap(
                         p -> p,
                         this::getScoreByInCurrentLeg
                 ));
-        return Map.of("scores current leg", currentScore,"legs won set", currentSetLegs,"sets won", gameSets);
-     }
+    }
+
      public int getArrowsLeft() {
         if (isOver()) {
             return 0;

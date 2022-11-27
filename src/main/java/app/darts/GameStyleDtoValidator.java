@@ -3,7 +3,7 @@ package app.darts;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class GameStyleValidatorDto implements ConstraintValidator<ValidGameStyleDto, GameStyleDto> {
+public class GameStyleDtoValidator implements ConstraintValidator<ValidGameStyleDto, GameStyleDto> {
 
     private GameStyleDto gameStyleDto;
     private ConstraintValidatorContext cvc;
@@ -29,7 +29,7 @@ public class GameStyleValidatorDto implements ConstraintValidator<ValidGameStyle
     }
 
     private boolean isLegCountValid() {
-        if (gameStyleDto.getLegsPerSet() < 1 || gameStyleDto.getLegsPerSet( ) % 2 == 0) {
+        if (gameStyleDto.getLegsPerSet() < 1 || gameStyleDto.getLegsPerSet() % 2 == 0) {
             cvc.buildConstraintViolationWithTemplate("Legs per set must be a positive, odd number.")
                     .addPropertyNode("legsPerSet").addConstraintViolation();
             return false;
@@ -48,7 +48,8 @@ public class GameStyleValidatorDto implements ConstraintValidator<ValidGameStyle
     }
 
     private boolean isOutshotStyleValid() {
-        if(!DartsConstants.GAME_STYLES.containsKey(gameStyleDto.getOutshotStyle().toUpperCase())) {
+        if (gameStyleDto.getOutshotStyle() == null
+                || !DartsConstants.GAME_STYLES.containsKey(gameStyleDto.getOutshotStyle().toUpperCase())) {
             cvc.buildConstraintViolationWithTemplate("You must choose an implemented outshot style. Options: "
                     + DartsConstants.GAME_STYLES.keySet()).addPropertyNode("outshotStyle").addConstraintViolation();
             return false;

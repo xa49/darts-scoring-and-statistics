@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = GameStyleValidatorDto.class)
+@Constraint(validatedBy = GameStyleDtoValidator.class)
 public @interface ValidGameStyleDto {
     String message() default "";
     Class<?>[] groups() default {};

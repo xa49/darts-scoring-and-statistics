@@ -112,4 +112,29 @@ class DartSetTest {
         assertEquals(2, dartSet.getLegs().size());
     }
 
+    @Test
+    void lastEventSetProperly() {
+        GameStyle multiRoundShortGame = GameStyle.builder()
+                .outshotStyle(OutshotStyle.DOUBLE_OR_INNER_BULL_OUT)
+                .sets(1)
+                .legsPerSet(3)
+                .initialScore(40)
+                .build();
+        DartSet dartSet = DartSet.of(multiRoundShortGame, "starting", "opponent", playerStatistics);
+
+        assertNull(dartSet.getLastEvent());
+
+        dartSet.addThrow(DartThrow.of("10"));
+        assertEquals(GameEvent.THROW, dartSet.getLastEvent());
+
+        dartSet.addThrow(DartThrow.of("d15"));
+        assertEquals(GameEvent.LEG_OVER, dartSet.getLastEvent());
+
+        dartSet.addThrow(DartThrow.of("t20")); // bust for opponent
+        assertEquals(GameEvent.THROW, dartSet.getLastEvent());
+
+        dartSet.addThrow(DartThrow.of("d20"));
+        assertEquals(GameEvent.SET_OVER, dartSet.getLastEvent());
+    }
+
 }

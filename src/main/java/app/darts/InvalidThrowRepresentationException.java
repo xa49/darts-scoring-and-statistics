@@ -9,6 +9,7 @@ public class InvalidThrowRepresentationException extends RuntimeException {
             .withSelfRel().getHref();
 
     public InvalidThrowRepresentationException(String reason, String input) {
-        super(reason + " Input: " + input + ". Read more about formatting rules at " + FORMATTING_GUIDANCE_URL);
+        super(reason + (reason.endsWith(".") ? "" : ".") +  " Input: " + input
+                + ". Read more about formatting rules at " + FORMATTING_GUIDANCE_URL);
     }
 }

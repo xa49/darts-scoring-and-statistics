@@ -1,5 +1,6 @@
 package app.darts.stats;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -7,6 +8,7 @@ import java.util.List;
 
 @Getter
 @ToString
+@Schema(name = "Player Statistics")
 public class PlayerStatisticsDto {
     private final String playerName;
     private final int legsPlayed;

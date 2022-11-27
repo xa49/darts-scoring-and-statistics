@@ -9,7 +9,7 @@ class InvalidThrowRepresentationExceptionTest {
     @Test
     void messageFormattedCorrectly() {
         var ex = new InvalidThrowRepresentationException("This input is XYZ not valid.", "w3");
-        assertEquals("This input is XYZ not valid. Input: w3. Read more about formatting rules at /help",
+        assertEquals("This input is XYZ not valid. Input: w3. Read more about formatting rules at /format-help",
                 ex.getMessage());
     }
 
